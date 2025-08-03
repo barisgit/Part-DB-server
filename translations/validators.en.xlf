@@ -359,5 +359,11 @@
         <target>Invalid code. Check that your authenticator app is set up correctly and that both the server and authentication device has the time set correctly.</target>
       </segment>
     </unit>
+    <unit id="isSelectable" name="validator.isSelectable">
+      <segment state="translated">
+        <source>validator.isSelectable</source>
+        <target>The element "{{ name }}" ({{ full_path }}) is not selectable.</target>
+      </segment>
+    </unit>
   </file>
 </xliff>
