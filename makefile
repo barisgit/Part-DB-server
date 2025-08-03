@@ -1,6 +1,6 @@
 # PartDB Makefile for Test Environment Management
 
-.PHONY: help test-setup test-clean test-db-create test-db-migrate test-cache-clear test-fixtures test-run dev-setup dev-clean dev-db-create dev-db-migrate dev-cache-clear dev-warmup dev-reset
+.PHONY: help test-setup test-clean test-db-create test-db-migrate test-cache-clear test-fixtures test-run dev-setup dev-clean dev-db-create dev-db-migrate dev-cache-clear dev-warmup dev-reset deps-install
 
 # Default target
 help:
@@ -8,13 +8,7 @@ help:
 	@echo "=================================="
 	@echo ""
 	@echo "Available targets:"
-	@echo "  test-setup      - Complete test environment setup (clean, create DB, migrate, load fixtures)"
-	@echo "  test-clean      - Clean test cache and database files"
-	@echo "  test-db-create  - Create test database (if not exists)"
-	@echo "  test-db-migrate - Run database migrations for test environment"
-	@echo "  test-cache-clear- Clear test cache"
-	@echo "  test-fixtures   - Load test fixtures"
-	@echo "  test-run        - Run PHPUnit tests"
+	@echo "  deps-install    - Install PHP dependencies with unlimited memory"
 	@echo ""
 	@echo "Development Environment:"
 	@echo "  dev-setup       - Complete development environment setup (clean, create DB, migrate, warmup)"
@@ -25,10 +19,25 @@ help:
 	@echo "  dev-warmup      - Warm up development cache"
 	@echo "  dev-reset       - Quick development reset (clean + migrate)"
 	@echo ""
+	@echo "Test Environment:"
+	@echo "  test-setup      - Complete test environment setup (clean, create DB, migrate, load fixtures)"
+	@echo "  test-clean      - Clean test cache and database files"
+	@echo "  test-db-create  - Create test database (if not exists)"
+	@echo "  test-db-migrate - Run database migrations for test environment"
+	@echo "  test-cache-clear- Clear test cache"
+	@echo "  test-fixtures   - Load test fixtures"
+	@echo "  test-run        - Run PHPUnit tests"
+	@echo ""
 	@echo "  help           - Show this help message"
 
+# Install PHP dependencies with unlimited memory
+deps-install:
+	@echo "📦 Installing PHP dependencies..."
+	COMPOSER_MEMORY_LIMIT=-1 composer install
+	@echo "✅ Dependencies installed"
+
 # Complete test environment setup
-test-setup: test-clean test-db-create test-db-migrate test-fixtures
+test-setup: deps-install test-clean test-db-create test-db-migrate test-fixtures
 	@echo "✅ Test environment setup complete!"
 
 # Clean test environment
@@ -46,7 +55,7 @@ test-db-create:
 # Run database migrations for test environment
 test-db-migrate:
 	@echo "🔄 Running database migrations..."
-	COMPOSER_MEMORY_LIMIT=-1 php bin/console doctrine:migrations:migrate -n --env test
+	php -d memory_limit=1G bin/console doctrine:migrations:migrate -n --env test
 
 # Clear test cache
 test-cache-clear:
@@ -64,12 +73,16 @@ test-run:
 	@echo "🧪 Running tests..."
 	php bin/phpunit
 
+test-typecheck:
+	@echo "🧪 Running type checks..."
+	COMPOSER_MEMORY_LIMIT=-1 composer phpstan
+
 # Quick test reset (clean + migrate + fixtures, skip DB creation)
 test-reset: test-cache-clear test-db-migrate test-fixtures
 	@echo "✅ Test environment reset complete!"
 
 # Development helpers
-dev-setup: dev-clean dev-db-create dev-db-migrate dev-warmup
+dev-setup: deps-install dev-clean dev-db-create dev-db-migrate dev-warmup
 	@echo "✅ Development environment setup complete!"
 
 dev-clean:
@@ -84,16 +97,16 @@ dev-db-create:
 
 dev-db-migrate:
 	@echo "🔄 Running database migrations..."
-	COMPOSER_MEMORY_LIMIT=-1 php bin/console doctrine:migrations:migrate -n --env dev
+	php -d memory_limit=1G bin/console doctrine:migrations:migrate -n --env dev
 
 dev-cache-clear:
 	@echo "🗑️  Clearing development cache..."
-	rm -rf var/cache/dev
+	php -d memory_limit=1G bin/console cache:clear --env dev -n
 	@echo "✅ Development cache cleared"
 
 dev-warmup:
 	@echo "🔥 Warming up development cache..."
-	COMPOSER_MEMORY_LIMIT=-1 php bin/console cache:warmup --env dev -n --memory-limit=1G
+	php -d memory_limit=1G bin/console cache:warmup --env dev -n
 
 dev-reset: dev-cache-clear dev-db-migrate
 	@echo "✅ Development environment reset complete!" 
